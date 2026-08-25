@@ -13,6 +13,13 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
 const IS_PROD = process.env.NODE_ENV === "production";
 
+// necessário atrás de um proxy (Render/Railway/etc terminam o HTTPS antes do app) para que o
+// Express reconheça a conexão como segura via X-Forwarded-Proto, senão o cookie de sessão
+// (secure: true em produção) nunca é enviado pelo navegador.
+if (IS_PROD) {
+  app.set("trust proxy", 1);
+}
+
 app.use(
   cors({
     origin: FRONTEND_ORIGIN,
