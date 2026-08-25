@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Assunto {
+  id               String   @id
+  semana           String
+  semanaOrdemNum   Int
+  semanaOrdemSuf   String
+  metaNumero       String
+  disciplina       String
+  assunto          String
+  pdfSemanaArquivo String
+  paginaInicio     Int?
+  paginaFim        Int?
+  passoAPassoBruto String
+
+  leituraBase      LeituraBase?
+  resumoConteudo   ResumoConteudo?
+  questoesFiltro   QuestoesFiltro?
+  legislacaoItens  LegislacaoItem[]
+  questoesSessoes  QuestoesSessao[]
+  observacoes      Observacao[]
+
+  @@index([disciplina])
+}
+
+model LeituraBase {
+  id          String    @id @default(cuid())
+  assuntoId   String    @unique
+  assunto     Assunto   @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  disponivel  Boolean   @default(false)
+  nomePdfBase String?
+  concluido   Boolean   @default(false)
+  concluidoEm DateTime?
+}
+
+model LegislacaoItem {
+  id        String   @id @default(cuid())
+  assuntoId String
+  assunto   Assunto  @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  texto     String
+  ordem     Int      @default(0)
+  concluido Boolean  @default(false)
+
+  @@index([assuntoId])
+}
+
+model ResumoConteudo {
+  id               String   @id @default(cuid())
+  assuntoId        String   @unique
+  assunto          Assunto  @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  paginaInicio     Int?
+  paginaFim        Int?
+  ultimaPaginaLida Int?
+}
+
+model QuestoesFiltro {
+  id                  String  @id @default(cuid())
+  assuntoId           String  @unique
+  assunto             Assunto @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  banca               String?
+  disciplina          String?
+  assuntoCodigo       String?
+  nivel               String?
+  area                String?
+  modalidade          String?
+  quantidadeSugerida  Int?
+}
+
+model QuestoesSessao {
+  id        String   @id @default(cuid())
+  assuntoId String
+  assunto   Assunto  @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  data      DateTime @default(now())
+  acertos   Int
+  erros     Int
+
+  @@index([assuntoId])
+}
+
+model Observacao {
+  id        String  @id @default(cuid())
+  assuntoId String
+  assunto   Assunto @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  texto     String
+
+  @@index([assuntoId])
+}
