@@ -2,6 +2,9 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
+const PLANILHA_URL =
+  "https://docs.google.com/spreadsheets/d/1gh2qAak3tUU-OTSzKlWTKwHYScrMfCTUaHAqQ3IaMh0/edit?usp=sharing";
+
 export default function Layout({
   children,
   onLogout,
@@ -15,15 +18,20 @@ export default function Layout({
         <Link to="/" className="brand">
           Painel de Estudo · AGU
         </Link>
-        <button
-          className="link-button"
-          onClick={async () => {
-            await api.logout();
-            onLogout();
-          }}
-        >
-          Sair
-        </button>
+        <div className="topbar-actions">
+          <a className="button-link small" href={PLANILHA_URL} target="_blank" rel="noreferrer">
+            Planilha de Estudos
+          </a>
+          <button
+            className="link-button"
+            onClick={async () => {
+              await api.logout();
+              onLogout();
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
       <main className="content">{children}</main>
     </div>

@@ -36,6 +36,10 @@ h1, h2 { font-weight: 600; }
 
 .brand { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.05rem; }
 
+.topbar-actions { display: flex; align-items: center; gap: 16px; }
+
+.button-link.small { padding: 6px 12px; font-size: 0.85rem; }
+
 .content { padding: 24px; max-width: 960px; margin: 0 auto; width: 100%; }
 
 .center-screen {
