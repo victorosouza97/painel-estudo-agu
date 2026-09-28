@@ -59,32 +59,36 @@ cd ../backend
 npm run seed            # reimporta (não apaga progresso já marcado)
 ```
 
-## Deploy em produção (Render)
+## Deploy em produção (servidor próprio — Hostinger KVM2)
 
-O repositório já tem um `render.yaml` pronto (Blueprint do Render): builda o frontend, builda o
-backend, e sobe um único serviço Node que serve a API e os arquivos estáticos do frontend.
+Site vivo em **https://estudos.souzautolub.com.br**, rodando no VPS próprio do usuário
+(72.61.77.51), como processo pm2 (`estudos-agu`, porta 3200) atrás de um reverse proxy nginx.
+O banco de dados continua no Neon (mesmo de desenvolvimento). *(Historicamente este projeto
+rodou no Render — o `render.yaml` foi removido do repositório após a migração de 2026-09-28.)*
 
-1. **GitHub**: crie um repositório vazio (sem README) em https://github.com/new e rode:
-   ```bash
-   git remote add origin <URL do repositório>
-   git push -u origin master
-   ```
-2. **Render**: em https://dashboard.render.com → New → Blueprint → conecte o repositório do
-   GitHub. O Render lê o `render.yaml` automaticamente e cria o serviço.
-3. Preencha as variáveis de ambiente pedidas no formulário do Render:
-   - `DATABASE_URL`: a mesma connection string do Neon já usada em desenvolvimento (o banco já
-     está com o schema migrado e os 243 assuntos importados — não precisa rodar seed de novo).
-   - `APP_USER` / `APP_PASSWORD_HASH`: gere um hash novo com uma senha forte:
-     ```bash
-     node -e "console.log(require('bcryptjs').hashSync('SUA_SENHA_FORTE', 10))"
-     ```
-   - `FRONTEND_ORIGIN`: a URL que o Render vai gerar (ex. `https://painel-estudo-agu.onrender.com`).
-   - `SESSION_SECRET`: o Render já gera um valor aleatório sozinho (`generateValue: true`).
-4. Deploy. O `startCommand` já roda `prisma migrate deploy` antes de subir o servidor, então o
-   schema fica sempre em dia a cada deploy.
-5. Acesse a URL gerada pelo Render — funciona de qualquer lugar, inclusive celular.
+### Deploy de uma atualização
 
-### Atualizando depois do primeiro deploy
+```bash
+# 1. build local
+cd frontend && npm run build && cd ../backend && npm run build
 
-Qualquer alteração: `git add -A && git commit -m "..." && git push` — o Render reconstrói e
-publica automaticamente a cada push na branch principal.
+# 2. empacotar (sem node_modules — o Prisma precisa gerar o binário certo no Linux)
+cd ..
+tar -czf /tmp/estudos-agu-deploy.tar.gz \
+  backend/dist backend/package.json backend/package-lock.json backend/prisma backend/public \
+  frontend/dist
+
+# 3. enviar e extrair no servidor
+scp -i ~/.ssh/prospecta_kvm2 /tmp/estudos-agu-deploy.tar.gz root@72.61.77.51:/tmp/
+ssh -i ~/.ssh/prospecta_kvm2 root@72.61.77.51 "cd /var/www/estudos && tar -xzf /tmp/estudos-agu-deploy.tar.gz && rm /tmp/estudos-agu-deploy.tar.gz"
+
+# 4. instalar dependências nativas e aplicar migrações no servidor (não localmente)
+ssh -i ~/.ssh/prospecta_kvm2 root@72.61.77.51 "cd /var/www/estudos/backend && npm install --omit=dev && npx prisma generate && npx prisma migrate deploy"
+
+# 5. reiniciar
+ssh -i ~/.ssh/prospecta_kvm2 root@72.61.77.51 "pm2 restart estudos-agu"
+```
+
+O `.env` de produção já está em `/var/www/estudos/backend/.env` no servidor (não versionado
+aqui) — só precisa ser recriado se o servidor for reconstruído do zero. Veja
+`.env.example` para as variáveis necessárias.
