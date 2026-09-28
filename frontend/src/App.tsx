@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { api } from "./lib/api";
+import { AssuntosProvider } from "./lib/AssuntosContext";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Disciplina from "./pages/Disciplina";
@@ -26,13 +27,15 @@ export default function App() {
   }
 
   return (
-    <Layout onLogout={() => setAuthed(false)}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/disciplina/:nome" element={<Disciplina />} />
-        <Route path="/assunto/:id" element={<Assunto />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    <AssuntosProvider>
+      <Layout onLogout={() => setAuthed(false)}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/disciplina/:nome" element={<Disciplina />} />
+          <Route path="/assunto/:id" element={<Assunto />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </AssuntosProvider>
   );
 }

@@ -1,48 +1,24 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, AssuntoSummary } from "../lib/api";
+import { useAssuntosContext } from "../lib/AssuntosContext";
 import { assuntoProgress, aggregateAssuntos, aproveitamento, formatPct } from "../lib/progress";
 import ProgressBar from "../components/ProgressBar";
 import AproveitamentoBadge from "../components/AproveitamentoBadge";
 
 export default function Disciplina() {
   const { nome } = useParams<{ nome: string }>();
-  const [assuntos, setAssuntos] = useState<AssuntoSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    if (!nome) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    api
-      .assuntos(nome)
-      .then((data) => {
-        if (cancelled) return;
-        setAssuntos(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError("Não foi possível carregar os assuntos.");
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [nome, attempt]);
+  const { porDisciplina, loading, error, refetch } = useAssuntosContext();
 
   if (loading) return <p>Carregando...</p>;
   if (error)
     return (
       <div>
         <p className="error-text">{error}</p>
-        <button onClick={() => setAttempt((a) => a + 1)}>Tentar novamente</button>
+        <button onClick={refetch}>Tentar novamente</button>
       </div>
     );
 
+  const nomeDecodificado = nome ? decodeURIComponent(nome) : "";
+  const assuntos = porDisciplina.get(nomeDecodificado) || [];
   const agg = aggregateAssuntos(assuntos);
 
   return (
@@ -50,7 +26,7 @@ export default function Disciplina() {
       <Link to="/" className="back-link">
         ← Disciplinas
       </Link>
-      <h1>{nome}</h1>
+      <h1>{nomeDecodificado}</h1>
 
       <div className="secao total-summary">
         <div className="row-gap">
